@@ -70,6 +70,16 @@ nav {
     height: 70vh;
 }
 
+.divImg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.divImg img {
+    margin: 0 auto;
+}
+
 .content-wrapper {
     padding: 10px;
     padding-left: 15px;
@@ -89,10 +99,11 @@ table {
     border: none;
     outline: none;
     color: white;
+    cursor: pointer;
     background-color: #ec644b;
     font-size: 10pt;
     border-radius: 10px;
-    height: 25px;
+    height: 20px;
     width: 70px;
 }
 

@@ -102,16 +102,48 @@ app.post('/api/marloscardoso/loginadmin', async(req, res) => {
         res.status(500).json({ message: 'Erro no servidor.' });
     }
 });
+app.post('/api/marloscardoso/loginusuario', async(req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Conectar ao servidor MongoDB
+        const client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
 
 
-async function saveData(token) {
+        // Selecionar o banco de dados
+        const db = client.db('MarlosCardoso');
+
+        // Verificar se o usuário existe na coleção de usuários
+        const user = await db.collection("Clientes").findOne({ username, password });
+
+        // Fechar a conexão com o MongoDB
+        await client.close();
+        // Gerar o token de autenticação
+
+        if (user) {
+            const tken = generateToken(user);
+            const token = tken
+            const cpf = user.cpf
+            saveData(token, username, password);
+            res.status(200).json({ message: 'Logado.', token, cpf });
+        } else {
+            res.status(401).json({ message: 'Credenciais inválidas. Tente novamente.' });
+        }
+    } catch (err) {
+        console.error('Erro ao processar a solicitação', err);
+        res.status(500).json({ message: 'Erro no servidor.' });
+    }
+});
+
+async function saveData(token, username, password) {
 
     const client = new MongoClient(uri, { useUnifiedTopology: true });
     await client.connect();
     const database = client.db("MarlosCardoso");
     const collection = database.collection("Token");
 
-    const newData = { usertoken: token };
+    const newData = { usertoken: token, username: username, password: password };
     const result = await collection.insertOne(newData);
 
     console.log('Token Salvo', result.insertedId);
@@ -168,6 +200,31 @@ app.post('/api/marloscardoso/addproduto', async(req, res) => {
 
         // Salvar os dados no MongoDB (coleção Produtos)
         await db.collection('Produtos').insertOne(formData);
+
+        // Fechar a conexão com o MongoDB
+        await client.close();
+
+        // Responder ao cliente com sucesso
+        res.status(200).json({ message: 'Produto Cadastrado' });
+    } catch (err) {
+        console.error('Erro ao salvar os dados no MongoDB', err);
+        res.status(500).json({ message: 'Erro no servidor.' });
+    }
+});
+// Endpoint para receber os dados do formulário
+app.post('/api/marloscardoso/pedidos', async(req, res) => {
+    try {
+        const formData = req.body; // Dados enviados pelo cliente
+
+        // Conectar ao MongoDB
+        const client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
+
+        // Selecionar o banco de dados
+        const db = client.db('MarlosCardoso');
+
+        // Salvar os dados no MongoDB (coleção Produtos)
+        await db.collection('Pedidos').insertOne(formData);
 
         // Fechar a conexão com o MongoDB
         await client.close();
@@ -317,6 +374,39 @@ app.post('/api/marloscardoso/addcategoria', async(req, res) => {
 });
 
 
+app.post('/api/marloscardoso/cadastrocliente', async(req, res) => {
+    try {
+        const formData = req.body; // Dados enviados pelo cliente
+
+        // Conectar ao MongoDB
+        const client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
+
+        // Selecionar o banco de dados
+        const db = client.db('MarlosCardoso');
+
+        // Verificar se o usuário existe na coleção de usuários
+        const { username } = formData;
+        const usuarioExistente = await db.collection("Clientes").findOne({ username });
+
+        if (usuarioExistente) {
+            res.status(401).json({ message: 'Usuário/Email Indisponível!' });
+        } else {
+            // Salvar os dados no MongoDB (coleção Clientes)
+            await db.collection('Clientes').insertOne(formData);
+
+
+            res.status(200).json({ message: 'Cadastrado' });
+        }
+
+        // Fechar a conexão com o MongoDB
+        await client.close();
+    } catch (err) {
+        console.error('Erro ao salvar os dados no MongoDB', err);
+        res.status(500).json({ message: 'Erro no servidor.' });
+    }
+});
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     storageBucket: 'geniusleap-2c33d.appspot.com', // Substitua pelo URL do seu bucket de armazenamento
@@ -390,6 +480,47 @@ app.get('/api/marloscardoso/listprodutos', async(req, res) => {
         // Consulta os dados na coleção 'dados' (substitua pelo nome da sua coleção)
         const collection = db.collection('Produtos');
         const dados = await collection.find().toArray();
+
+        await client.close();
+
+        res.json(dados);
+    } catch (err) {
+        console.error('Erro ao consultar os dados:', err);
+        res.status(500).json({ error: 'Erro no servidor.' });
+    }
+});
+
+app.get('/api/marloscardoso/listapedidos', async(req, res) => {
+    try {
+        const client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
+
+        const db = client.db('MarlosCardoso'); // Substitua pelo nome do seu banco de dados
+
+        // Consulta os dados na coleção 'dados' (substitua pelo nome da sua coleção)
+        const collection = db.collection('Pedidos');
+        const dados = await collection.find().toArray();
+
+        await client.close();
+
+        res.json(dados);
+    } catch (err) {
+        console.error('Erro ao consultar os dados:', err);
+        res.status(500).json({ error: 'Erro no servidor.' });
+    }
+});
+
+app.get('/api/marloscardoso/listapedidosuser', async(req, res) => {
+    try {
+        const cpf = req.query.cpf; // Recupera o valor do parâmetro "cpf" da requisição
+        const client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
+
+        const db = client.db('MarlosCardoso'); // Substitua pelo nome do seu banco de dados
+
+        // Consulta os dados na coleção 'Pedidos' filtrando pelo CPF
+        const collection = db.collection('Pedidos');
+        const dados = await collection.find({ cpf: cpf }).toArray();
 
         await client.close();
 

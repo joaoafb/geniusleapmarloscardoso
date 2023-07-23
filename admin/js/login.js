@@ -52,7 +52,7 @@
           sessionStorage.setItem("username", data.username)
           let timerInterval
           Swal.fire({
-              title: 'Verificando Credenciais!!',
+              title: 'Verificando Credenciais...',
               html: 'Olá, ' + data.username,
               showConfirmButton: false,
               timer: 2000,
