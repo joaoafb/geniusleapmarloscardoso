@@ -179,6 +179,31 @@ app.post('/api/marloscardoso/addproduto', async(req, res) => {
         res.status(500).json({ message: 'Erro no servidor.' });
     }
 });
+// Endpoint para receber os dados do formulário
+app.post('/api/marloscardoso/addpedidos', async(req, res) => {
+    try {
+        const formData = req.body; // Dados enviados pelo cliente
+
+        // Conectar ao MongoDB
+        const client = new MongoClient(uri, { useUnifiedTopology: true });
+        await client.connect();
+
+        // Selecionar o banco de dados
+        const db = client.db('MarlosCardoso');
+
+        // Salvar os dados no MongoDB (coleção Produtos)
+        await db.collection('Pedidos').insertOne(formData);
+
+        // Fechar a conexão com o MongoDB
+        await client.close();
+
+        // Responder ao cliente com sucesso
+        res.status(200).json({ message: 'Pedido Cadastrado' });
+    } catch (err) {
+        console.error('Erro ao salvar os dados no MongoDB', err);
+        res.status(500).json({ message: 'Erro no servidor.' });
+    }
+});
 app.post('/api/marloscardoso/alterarclientes', async(req, res) => {
     try {
         const Dados = req.body; // Dados enviados pelo cliente
