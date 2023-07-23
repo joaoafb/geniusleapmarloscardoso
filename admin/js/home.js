@@ -82,7 +82,7 @@ function pedidos() {
         </tbody>
     </table>
     `
-    fetch('http://192.168.1.114/api/marloscardoso/listapedidos')
+    fetch('/api/marloscardoso/listapedidos')
         .then(response => response.json())
         .then(data => {
 
